@@ -16,7 +16,7 @@ def token_required(view, required=True):
         except (KeyError, AttributeError):
             pass
         request.uucode = get_token_userid(request.access_token)
-        if required:
+        if required and not request.uucode:
             return HttpResponseForbidden()
         return view(request, *args, **kwargs)
     return decorator

@@ -7,14 +7,13 @@ from django.http.response import HttpResponseForbidden, HttpResponseBadRequest
 from oauth2.passport import get_token_userid
 
 
-def token_required(view, json_stream=True, required=True):
+def token_required(view, required=True, json_stream=True, has_version=True):
     def decorator(request, *args, **kwargs):
-        request.access_token = None
         try:
             request.access_token = re.match(
                 '^token (\w+)', request.META['HTTP_AUTHORIZATION']).groups()[0]
         except (KeyError, AttributeError):
-            pass
+            request.access_token = None
         request.uucode = get_token_userid(request.access_token)
         if required and not request.uucode:
             return HttpResponseForbidden()
@@ -26,5 +25,12 @@ def token_required(view, json_stream=True, required=True):
                 except ValueError:
                     return HttpResponseBadRequest(json.dumps({
                         "message": "Problems parsing JSON"}))
+        if has_version:
+            try:
+                request.version = re.match(
+                    '^application/vnd.uucin.v(.+)\+json',
+                    request.META['HTTP_ACCEPT']).groups()[0]
+            except (KeyError, AttributeError):
+                request.version = None
         return view(request, *args, **kwargs)
     return decorator

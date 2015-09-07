@@ -7,8 +7,11 @@ from django.http.response import HttpResponseForbidden, HttpResponseBadRequest
 from oauth2.passport import get_token_userid
 
 
-def token_required(view, required=True, json_stream=True, has_version=True):
+def token_required(view, required=True, json_stream=True,
+        has_version=True, methods=["GET" ,"POST", "PUT", "DELETE", "PATCH"]):
     def decorator(request, *args, **kwargs):
+        if request.method not in methods:
+            return view(request, *args, **kwargs)
         try:
             request.access_token = re.match(
                 '^token (\w+)', request.META['HTTP_AUTHORIZATION']).groups()[0]
